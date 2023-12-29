@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34202.233
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Music-Streaming-Server", "Music-Streaming-Server\Music-Streaming-Server.csproj", "{6EFD272C-84B5-4E67-BEDC-AD68E2EA2999}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Music-Server", "Music-Streaming-Server\Music-Server.csproj", "{6EFD272C-84B5-4E67-BEDC-AD68E2EA2999}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Simple-Client", "Simple-Client\Simple-Client.csproj", "{B55759DC-5C43-4E70-AD34-B71C932E948A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Simple-Client", "Simple-Client\Simple-Client.csproj", "{B55759DC-5C43-4E70-AD34-B71C932E948A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

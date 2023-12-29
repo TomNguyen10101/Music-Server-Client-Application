@@ -1,5 +1,6 @@
 ﻿using Music_Streaming_Server;
 using System;
+using System.IO;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -33,7 +34,6 @@ namespace StreamingServer
         {
             IPEndPoint ep = new IPEndPoint(IPAddress.Any, port);
             TcpListener listener = new TcpListener(ep);
-            listener.Start();
 
             try
             {
@@ -111,6 +111,7 @@ namespace StreamingServer
             try
             {
                 state.theSocket.BeginReceive(state.buffer, 0, SocketState.BufferSize, 0, ReceiveCallBack, state);
+                
             }
             catch (Exception ex)
             {
@@ -119,7 +120,6 @@ namespace StreamingServer
                 state.OnNetworkAction(state);
             }
         }
-
         private static void ReceiveCallBack(IAsyncResult ar)
         {
             SocketState state = (SocketState)ar.AsyncState;
@@ -134,7 +134,7 @@ namespace StreamingServer
                     {
                         state.data.Append(Encoding.UTF8.GetString(state.buffer, 0, bytesRead));
                     }
-
+                    Console.WriteLine(state.GetData());
                     // Give the client program's stored function a call so that it can process the data
                     state.OnNetworkAction(state);
                     return;
@@ -144,14 +144,54 @@ namespace StreamingServer
                     state.ErrorOccured = true;
                     state.ErrorMessage = "Socket was closed";
                 }
+
             }
             catch(Exception ex)
             {
                 state.ErrorOccured = true;
                 state.ErrorMessage = ex.ToString();
-                
             }
             state.OnNetworkAction(state);
+        }
+
+        public static void Send(Socket socket, string data)
+        {
+            if (!socket.Connected) { return; }
+            try
+            {
+                int offset = 0;
+                byte[] byteData = Encoding.UTF8.GetBytes(data);
+                socket.BeginSend(byteData, offset, byteData.Length, SocketFlags.None, SendCallBack, socket);
+            }
+            catch(Exception ex)
+            {
+                try
+                {
+                    socket.Shutdown(SocketShutdown.Both);
+                    socket.Close();
+                }
+                catch (Exception e)
+                {
+
+                }
+            }
+        }
+
+        private static void SendCallBack(IAsyncResult ar)
+        {
+            try
+            {
+                Socket socket = (Socket)ar.AsyncState;
+                if (socket.Connected)
+                {
+                    socket.EndSend(ar);
+                }
+            }
+
+            catch(Exception e)
+            {
+
+            }
         }
 
 
@@ -164,13 +204,48 @@ namespace StreamingServer
 
             Console.WriteLine("New Connection: Client " + state.ID);
             Console.WriteLine("Accepted new connection from " + state.theSocket?.RemoteEndPoint?.ToString());
+
+            lock (connections)
+            {
+                connections.AddLast(state);
+            }
             GetData(state);
+            SendFile(state);
+
+                   
+        }
+
+        private static void SendFile(SocketState state)
+        {
+            try
+            {
+                NetworkStream netstream = new NetworkStream(state.theSocket);
+                StreamWriter writer = new StreamWriter(netstream);
+                FileStream fileStream = File.Open("RIZZ-Sound-Effect.mp3", FileMode.Open, FileAccess.Read, FileShare.Read);
+                fileStream.CopyTo(netstream);
+                netstream.Flush();
+                // Send a message to the client, signal that it is done transfering the data
+                Send(state.theSocket, "__END_OF_TRANSMISSION__");
+                netstream.Close();
+            }
+          
+            catch (Exception ex)
+            {
+                // Handle exceptions (log, throw, etc.)
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+
+
+
         }
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
             StartServer(HandleNewClient, 8000);
+            running = true;
+
+            Console.ReadLine();
+            
         }
     }
 }

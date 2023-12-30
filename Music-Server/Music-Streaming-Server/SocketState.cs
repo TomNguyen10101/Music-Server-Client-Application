@@ -40,8 +40,11 @@ namespace Music_Streaming_Server
 
         }
 
-        // Return the unprocessed data the SocketState has received so far 
-        // in thread-safe way
+        /// <summary>
+        /// Return the unprocessed data the SocketState has received so far 
+        /// in thread-safe way
+        /// </summary>
+        /// <returns></returns>
         public string GetData()
         {
             string remainData;

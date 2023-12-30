@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Music-Server", "Music-Strea
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Simple-Client", "Simple-Client\Simple-Client.csproj", "{B55759DC-5C43-4E70-AD34-B71C932E948A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Music-Database", "Music-Database\Music-Database.csproj", "{3144E0D5-4643-49FF-AFFB-3E3C8EA63006}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{B55759DC-5C43-4E70-AD34-B71C932E948A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B55759DC-5C43-4E70-AD34-B71C932E948A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B55759DC-5C43-4E70-AD34-B71C932E948A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3144E0D5-4643-49FF-AFFB-3E3C8EA63006}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3144E0D5-4643-49FF-AFFB-3E3C8EA63006}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3144E0D5-4643-49FF-AFFB-3E3C8EA63006}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3144E0D5-4643-49FF-AFFB-3E3C8EA63006}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -30,6 +30,12 @@ namespace StreamingServer
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="callThis"></param>
+        /// <param name="port"></param>
+        /// <returns></returns>
         public static TcpListener StartServer(Action<SocketState> callThis, int port)
         {
             IPEndPoint ep = new IPEndPoint(IPAddress.Any, port);
@@ -50,6 +56,10 @@ namespace StreamingServer
             return listener;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ar"></param>
         public static void AcceptNewClient(IAsyncResult ar)
         {
             NewConnectionState state = (NewConnectionState)ar.AsyncState;
@@ -93,6 +103,10 @@ namespace StreamingServer
 
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="listener"></param>
         public static void StopServer(TcpListener listener)
         {
             try
@@ -105,6 +119,10 @@ namespace StreamingServer
             }
         }
 
+        /// <summary>
+        /// Get data from the user
+        /// </summary>
+        /// <param name="state"></param>
         public static void GetData(SocketState state)
         {
             // Await more data
@@ -195,8 +213,10 @@ namespace StreamingServer
         }
 
 
-
-        // When a client first connect, this function will be called to handle that new connection
+        /// <summary>
+        /// When a client first connect, this function will be called to handle that new connection
+        /// </summary>
+        /// <param name="state"></param>
         private static void HandleNewClient(SocketState state)
         {
             // Return if there is an error during network operation or the server is not running
@@ -210,18 +230,22 @@ namespace StreamingServer
                 connections.AddLast(state);
             }
             GetData(state);
-            SendFile(state);
-
-                   
+            SendFile(state);      
         }
 
+        /// <summary>
+        /// Send mp3 file to the user based on their search
+        /// </summary>
+        /// <param name="state"></param>
         private static void SendFile(SocketState state)
         {
             try
             {
                 NetworkStream netstream = new NetworkStream(state.theSocket);
                 StreamWriter writer = new StreamWriter(netstream);
-                FileStream fileStream = File.Open("RIZZ-Sound-Effect.mp3", FileMode.Open, FileAccess.Read, FileShare.Read);
+
+                string filename = $"C:\\"; // Replace with an abosulte file path
+                FileStream fileStream = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
                 fileStream.CopyTo(netstream);
                 netstream.Flush();
                 // Send a message to the client, signal that it is done transfering the data
@@ -234,10 +258,9 @@ namespace StreamingServer
                 // Handle exceptions (log, throw, etc.)
                 Console.WriteLine($"Error: {ex.Message}");
             }
-
-
-
         }
+
+        // TODO: Implement the protocol for receiving different data from the users
 
         static void Main(string[] args)
         {

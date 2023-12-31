@@ -4,7 +4,7 @@ using Microsoft.Data.Sqlite;
 
 namespace MusicDB
 {
-    class MusicDB
+    public class DB
     {
         /// <summary>
         /// Get the song path based on the user search
@@ -12,7 +12,9 @@ namespace MusicDB
         /// <param name="query"></param>
         public static string GetSongFromDb(string query)
         {
-            using(var connection = new SqliteConnection("Data Source=musicDB.db"))
+            //string currentDirectory = Directory.GetCurrentDirectory();
+            //Console.WriteLine($"Current Directory: {currentDirectory}");
+            using (var connection = new SqliteConnection("Data Source=musicDB.db"))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
@@ -29,7 +31,7 @@ namespace MusicDB
                 }
             }
 
-            return "No Result";
+            return null;
         }
 
         /// <summary>
@@ -41,6 +43,7 @@ namespace MusicDB
         /// <param name="path"></param>
         private static void AddSong(string name, string artist, string path)
         {
+            // REPLACE Data Source with an absolute path to the database
             using (var connection = new SqliteConnection("Data Source=musicDB.db"))
             {
                 connection.Open();
@@ -78,8 +81,6 @@ namespace MusicDB
 
         static void Main(string[] args)
         {
-
-            //AddSong("Rizz-Sound-Effect", null, @"C:\Users\lamqu\OneDrive\Máy tính\Personal\Music\RIZZ-Sound-Effect.mp3");
             GetSongFromDb("Rizz");
         }
     }

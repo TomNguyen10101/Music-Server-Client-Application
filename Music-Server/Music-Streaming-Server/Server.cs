@@ -1,18 +1,16 @@
 ﻿using Music_Streaming_Server;
-using System;
-using System.IO;
 using System.Net;
-using System.Net.Security;
 using System.Net.Sockets;
 using System.Text;
-
+using MusicDB;
+using SQLitePCL;
 namespace StreamingServer
 {
     class Server
     {
         // Global Variables
         private static bool running = false;
-        public static LinkedList<SocketState> connections = new LinkedList<SocketState>();  
+        public static LinkedList<SocketState> connections = new LinkedList<SocketState>();
 
 
         // State object used to pass between StartServer and AcceptNewClient
@@ -152,7 +150,6 @@ namespace StreamingServer
                     {
                         state.data.Append(Encoding.UTF8.GetString(state.buffer, 0, bytesRead));
                     }
-                    Console.WriteLine(state.GetData());
                     // Give the client program's stored function a call so that it can process the data
                     state.OnNetworkAction(state);
                     return;
@@ -229,23 +226,66 @@ namespace StreamingServer
             {
                 connections.AddLast(state);
             }
-            GetData(state);
-            SendFile(state);      
+            state.OnNetworkAction = ReceiveClientQuery;
+            GetData(state);    
+        }
+
+        /// <summary>
+        /// Handle the query from the client
+        /// </summary>
+        /// <param name="state"></param>
+        private static void ReceiveClientQuery(SocketState state)
+        {
+            if (state.ErrorOccured) { return; }
+            if (!running) { return; }
+
+            Socket client = state.theSocket;
+            string[] songQuery = state.GetData().Split(':');
+            foreach (string query in  songQuery)
+            { 
+                Console.WriteLine(query);
+            }
+
+            // Protocol:
+            // 1. Search by song name: "Search:name:<song name>"
+            // 2. Search by artist: "Search:artist:<artist>"
+            // 3. Search by both: "Search:<song name>,<artist>"
+
+            if (songQuery[0] == "Search")
+            {
+                if(songQuery.Length > 2)
+                { 
+                    if (songQuery[1] == "name")
+                    {
+                        string songToFind = songQuery[2];
+                        string songPath = DB.GetSongFromDb(songToFind);
+                        if (songPath != null) SendFile(state, songPath);
+                        else { Console.WriteLine("No Result!"); }
+                    }
+                    else if (songQuery[1] == "artist")
+                    {
+
+                    }
+                }
+                else
+                {
+
+                }
+            }
+            return;
         }
 
         /// <summary>
         /// Send mp3 file to the user based on their search
         /// </summary>
         /// <param name="state"></param>
-        private static void SendFile(SocketState state)
+        private static void SendFile(SocketState state, string filePath)
         {
             try
             {
                 NetworkStream netstream = new NetworkStream(state.theSocket);
                 StreamWriter writer = new StreamWriter(netstream);
-
-                string filename = $"C:\\"; // Replace with an abosulte file path
-                FileStream fileStream = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
+                FileStream fileStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
                 fileStream.CopyTo(netstream);
                 netstream.Flush();
                 // Send a message to the client, signal that it is done transfering the data

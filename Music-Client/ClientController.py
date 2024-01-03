@@ -1,43 +1,12 @@
-# import socket
-
-# from io import BytesIO
-# HOST = 'localhost'
-# PORT = 8000
-
-# buffer = b''
-# pygame.init()
-# pygame.mixer.init()
-# with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-#     s.connect((HOST, PORT))
-#     s.sendall(b'Hello World!')
-
-#     while True:
-#         data = s.recv(1024)
-#         buffer += data
-#         if b'__END_OF_TRANSMISSION__' in data:
-#                 print("End of transmission received.")
-#                 break
-        
-        
-# # Play the music buffer
-# try:
-#     sound = pygame.mixer.Sound(BytesIO(buffer))
-#     sound.play()
-#     pygame.time.wait(int(sound.get_length() * 1000))  # Wait for the sound to finish playing
-    
-# except pygame.error as e:
-#     print(f"Error playing audio: {e}")
-# finally:
-#     # with open("my_file.mp3", "wb") as binary_file:
-#     #     # Write bytes to file
-#     #     binary_file.write(buffer)
-#     pass
-
 from ClientModel import Playlist
 import random
 import pygame
+import socket
+from io import BytesIO
+import asyncio
+
 class MusicController:
-    def __init__(self, trackTextBox, playBtn, playImg, pauseImg, track):
+    def __init__(self, trackTextBox, playBtn, playImg, pauseImg, track, onlBtn):
         # Volume Variable(s)
         self.mute = False
         self.preVol = 0.0
@@ -59,6 +28,7 @@ class MusicController:
         self.playImage = playImg
         self.pauseImage = pauseImg
         self.track = track
+        self.onlBtn = onlBtn
 
         # Track State Variable(s)
         self.singleLoop = False
@@ -71,6 +41,11 @@ class MusicController:
 
         self.prevIndex = None
         self.currIndex = None
+
+        # Connection Flag && Variables
+        self.isConnected = False
+        self.HOST = 'localhost'
+        self.PORT = 8000
 
     # Play the current song
     def Play(self):
@@ -197,7 +172,7 @@ class MusicController:
         pygame.mixer.music.set_volume(self.preVol)     
 
 
-    ####### PLAYLIST CODE SECTION #######
+    ####### PLAYLIST CODE SECTION ########
     # Get playlist size 
     def GetPlaylistSize(self):
         return self.playlist.size
@@ -221,6 +196,70 @@ class MusicController:
     # Add a song to the playlist
     def AddToPlaylist(self, newSong):
         return self.playlist.Append(newSong)
+    
+    #######################################
+
+    ####### NETWORKING CODE SECTION #######
+    # HOST = 'localhost'
+    # PORT = 8000
+
+    # buffer = b''
+    # pygame.init()
+    # pygame.mixer.init()
+    # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    #     s.connect((HOST, PORT))
+    #     s.sendall(b'Hello World!')
+
+    #     while True:
+    #         data = s.recv(1024)
+    #         buffer += data
+    #         if b'__END_OF_TRANSMISSION__' in data:
+    #                 print("End of transmission received.")
+    #                 break
+            
+            
+    # # Play the music buffer
+    # try:
+    #     sound = pygame.mixer.Sound(BytesIO(buffer))
+    #     sound.play()
+    #     pygame.time.wait(int(sound.get_length() * 1000))  # Wait for the sound to finish playing
+        
+    # except pygame.error as e:
+    #     print(f"Error playing audio: {e}")
+    # finally:
+    #     # with open("my_file.mp3", "wb") as binary_file:
+    #     #     # Write bytes to file
+    #     #     binary_file.write(buffer)
+    #     pass
+
+    def ConnectToServer(self):
+        buffer = b''
+        self.onlBtn.configure(state="disable", fg_color= "#808080")
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                
+                s.connect((self.HOST, self.PORT))
+                self.onlBtn.configure(text="Go Offline")
+
+                    # Start listening after successfully connected to the server
+                    # while True:
+                    #     data = s.recv(1024)
+                    #     buffer += data
+                    #     if b'__END_OF_TRANSMISSION__' in data:
+                    #             print("End of transmission received.")
+                    #             break
+
+        except socket.error as error:
+            print(f"{error}")
+            self.onlBtn.configure(state="normal", fg_color='#CD4F39')
+
+
+
+
+
+
+
+
 
     
 

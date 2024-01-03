@@ -12,11 +12,13 @@ from tkinter import FLAT
 from tkinter import END
 from tkinter import filedialog
 import pygame
+import asyncio
 customtkinter.set_appearance_mode("dark")
 customtkinter.set_default_color_theme("green")
 from ClientModel import Playlist, Song
 from ClientController import MusicController
 import os
+import threading
 
 class MusicPlayer:
     def __init__(self, root):
@@ -62,8 +64,8 @@ class MusicPlayer:
         # Define Font
         font = customtkinter.CTkFont(family="Helvatica",
                                         size = 15,
-                                        weight="normal")
-
+                                        weight="bold")
+        
         self.queuelistFrame= customtkinter.CTkFrame(master=self.root)
         self.queuelistFrame.grid(row=0,column=0,padx=20, columnspan=2, pady=(20,0), sticky="nsew")
 
@@ -89,7 +91,18 @@ class MusicPlayer:
 
         self.rmvSongBtn = customtkinter.CTkButton(master=self.queuelistFrame,text="", width=40, height=40,hover_color="#fff", fg_color="#CD4F39",command=self.RemoveSong,image=self.rmvImage)
         self.rmvSongBtn.place(relx=0.27 , rely=0.09, anchor=CENTER)
-        
+
+        # Go Online Button
+        self.onlineBtn = customtkinter.CTkButton(master=self.queuelistFrame, width=155, height=40,hover_color="#fff", fg_color="#CD4F39")
+        self.onlineBtn.place(relx=0.17 , rely=0.25, anchor=CENTER)
+        self.onlineBtn.configure(text="Go Online", text_color="black",font=("Helvatica",17))
+        self.onlineBtn.configure(command=lambda: threading.Thread(target=self.GoOnlineButtonClick).start())
+
+        # Entry Box for searching song
+        self.searchBox = customtkinter.CTkEntry(master=self.queuelistFrame, placeholder_text="Type a song",width=155, height=40)
+        self.searchBox.place(relx=0.17 , rely=0.40, anchor=CENTER)
+        self.searchBox.configure(state="disable")
+
         self.controllerFrame = customtkinter.CTkFrame(master=root, height=70, width=570)
         self.controllerFrame.grid(row=3,column=0,padx=20,pady=5,sticky="nsew")
 
@@ -133,10 +146,17 @@ class MusicPlayer:
         self.volumnSlider.place(relx=0.88, rely=0.5, anchor=CENTER)
         self.volumnSlider.set(self.volumn)
 
+        print(self.loop)
         # Init MusicController
-        self.musicController = MusicController(self.trackTextBox, self.playBtn, self.playImage, self.pauseImage, self.track)
-    
+        self.musicController = MusicController(self.trackTextBox, self.playBtn, self.playImage, self.pauseImage, self.track, self.onlineBtn)
 
+    def GoOnlineButtonClick(self):
+        self.searchBox.configure(state="normal")
+        self.addSongBtn.configure(state="disable")
+        self.addListBtn.configure(state="disable")
+        self.rmvSongBtn.configure(state="disable")
+        self.musicController.ConnectToServer()
+    
     # When play button clicked, run these methods
     def PlayButtonClick(self):
         self.musicController.Play()
@@ -219,40 +239,49 @@ class MusicPlayer:
     # Add (playlist) folder to the program
     def AddPlayList(self):
         self.trackTextBox.configure(state="normal")
-        #Ask for the folder that contains music files, and add those to the playlist
-        folderPath = filedialog.askdirectory(title="Choose a music folder")
-        os.chdir(folderPath)
-        songtracks = os.listdir()
-        for i, track in enumerate(songtracks):
-            newSong = Song(track)
-            isDuplicate = self.musicController.AddToPlaylist(newSong)
-            if not isDuplicate:
-                self.trackTextBox.insert(END, f"{i + 1}. {track}")
+        if self.addListBtn.cget("state") == 'normal':
+            #Ask for the folder that contains music files, and add those to the playlist
+            try:
+                folderPath = filedialog.askdirectory(title="Choose a music folder")
+                os.chdir(folderPath)
+                songtracks = os.listdir()
+                for i, track in enumerate(songtracks):
+                    newSong = Song(track)
+                    isDuplicate = self.musicController.AddToPlaylist(newSong)
+                    if not isDuplicate:
+                        self.trackTextBox.insert(END, f"{i + 1}. {track}")
+            except Exception as e:
+                print(f"{e}")
     
     # Add specific mp3 file to the program
     def AddSong(self):
         self.trackTextBox.configure(state="normal")
-        filePath = filedialog.askopenfile(title="Choose a MP3 file",mode='r')
-        file = os.path.abspath(filePath.name)
-        track = os.path.basename(filePath.name)
-        newSong = Song(file=file)
-        isDuplicate = self.musicController.AddToPlaylist(newSong)
-        if not isDuplicate:
-            self.trackTextBox.insert(END, f"{self.musicController.GetPlaylistSize()}. {track}")
+        if self.addSongBtn.cget("state") == 'normal':
+            try:
+                filePath = filedialog.askopenfile(title="Choose a MP3 file",mode='r')
+                file = os.path.abspath(filePath.name)
+                track = os.path.basename(filePath.name)
+                newSong = Song(file=file)
+                isDuplicate = self.musicController.AddToPlaylist(newSong)
+                if not isDuplicate:
+                    self.trackTextBox.insert(END, f"{self.musicController.GetPlaylistSize()}. {track}")
+            except Exception as e:
+                print(f"{e}")
 
     # Remove the choosing song from the listbox
     def RemoveSong(self):
-        index = self.trackTextBox.curselection()
-        if index:
-            self.chosenItem = index[0]
-            song = self.trackTextBox.get(self.chosenItem)
-            spaceIndex = song.find(' ')
-            self.musicController.RemoveFromPlayList(song[spaceIndex + 1:])
+        if self.rmvSongBtn.cget("state") == 'normal':
+            index = self.trackTextBox.curselection()
+            if index:
+                self.chosenItem = index[0]
+                song = self.trackTextBox.get(self.chosenItem)
+                spaceIndex = song.find(' ')
+                self.musicController.RemoveFromPlayList(song[spaceIndex + 1:])
 
-            # Display the new playlist after removing
-            self.trackTextBox.delete(0,END)
-            for i, track in enumerate(self.musicController.GetSongList()):
-                self.trackTextBox.insert(END, f"{i + 1}. {track}")
+                # Display the new playlist after removing
+                self.trackTextBox.delete(0,END)
+                for i, track in enumerate(self.musicController.GetSongList()):
+                    self.trackTextBox.insert(END, f"{i + 1}. {track}")
 
     # Display the song playtime on the GUI and update the progress bar
     def GetTime(self, root):
@@ -277,6 +306,9 @@ class MusicPlayer:
         root.after(50, self.GetTime, root)
 
 
+    def run(self):
+        self.root.mainloop()
+
 root = customtkinter.CTk()
 musicPlayer = MusicPlayer(root)
-root.mainloop()
+asyncio.run(musicPlayer.run())

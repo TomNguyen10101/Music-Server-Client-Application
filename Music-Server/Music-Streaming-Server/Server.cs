@@ -241,38 +241,44 @@ namespace StreamingServer
 
             Socket client = state.theSocket;
             string[] songQuery = state.GetData().Split(':');
-            foreach (string query in  songQuery)
-            { 
+            foreach (string query in songQuery)
+            {
                 Console.WriteLine(query);
             }
 
-            // Protocol:
-            // 1. Search by song name: "Search:name:<song name>"
-            // 2. Search by artist: "Search:artist:<artist>"
-            // 3. Search by both: "Search:<song name>,<artist>"
+            // Protocol: Search:<name>,<artist>,.....
 
             if (songQuery[0] == "Search")
             {
-                if(songQuery.Length > 2)
-                { 
-                    if (songQuery[1] == "name")
-                    {
-                        string songToFind = songQuery[2];
-                        string songPath = DB.GetSongFromDb(songToFind);
-                        if (songPath != null) SendFile(state, songPath);
-                        else { Console.WriteLine("No Result!"); }
-                    }
-                    else if (songQuery[1] == "artist")
-                    {
-
-                    }
-                }
-                else
+                if (songQuery.Length > 1)
                 {
+                    //if (songQuery[1] == "name")
+                    //{
+                    //    string songToFind = songQuery[2];
+                    //    string songPath = DB.GetSongFromDb(songToFind);
+                    //    if (songPath != null) SendFile(state, songPath);
+                    //    else { 
+                    //        Console.WriteLine("No Result!");
+                    //        Send(state.theSocket, "No Result__END_OF_TRANSMISSION__");
+                    //    }
+                    //}
+                    //else if (songQuery[1] == "artist")
+                    //{
 
+                    //}
+
+                    string[] searchParams = songQuery[1].Split(',');
+                    string songPath = DB.GetSongFromDb(searchParams[0]);
+                    if (songPath != null)
+                        SendFile(state, songPath);
+                    else
+                    {
+                        Console.WriteLine("No Result!");
+                        Send(state.theSocket, "No Result__END_OF_TRANSMISSION__");
+                    }
                 }
+                return;
             }
-            return;
         }
 
         /// <summary>

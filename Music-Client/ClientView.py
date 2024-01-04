@@ -53,9 +53,14 @@ class MusicPlayer:
         self.folderImage = PhotoImage(file="Icons\\folder.png")
         self.addImage = PhotoImage(file="Icons\\add.png")
         self.rmvImage = PhotoImage(file="Icons\\minus.png")
+        self.searchImage = PhotoImage(file="Icons\\search.png")
 
         # Volume Variable
         self.volumn = 100
+
+        # THREADS
+        self.onlineThread = None
+        self.searchThread = None
 
         # NEW GUI
         self.root.grid_rowconfigure(0, weight=1)
@@ -96,12 +101,17 @@ class MusicPlayer:
         self.onlineBtn = customtkinter.CTkButton(master=self.queuelistFrame, width=155, height=40,hover_color="#fff", fg_color="#CD4F39")
         self.onlineBtn.place(relx=0.17 , rely=0.25, anchor=CENTER)
         self.onlineBtn.configure(text="Go Online", text_color="black",font=("Helvatica",17))
-        self.onlineBtn.configure(command=lambda: threading.Thread(target=self.GoOnlineButtonClick).start())
+        self.onlineBtn.configure(command=lambda: self.RunOnlineThread() if self.onlineBtn.cget('state') == 'normal' else None)
 
         # Entry Box for searching song
-        self.searchBox = customtkinter.CTkEntry(master=self.queuelistFrame, placeholder_text="Type a song",width=155, height=40)
-        self.searchBox.place(relx=0.17 , rely=0.40, anchor=CENTER)
+        self.searchBox = customtkinter.CTkEntry(master=self.queuelistFrame, placeholder_text="Type a song",width=110, height=40)
+        self.searchBox.place(relx=0.13 , rely=0.40, anchor=CENTER)
         self.searchBox.configure(state="disable")
+
+        # Search Button
+        self.searchBtn = customtkinter.CTkButton(master = self.queuelistFrame,text="",width=40, height=40,hover_color="#fff", fg_color="#CD4F39",image=self.searchImage)
+        self.searchBtn.place(relx=0.27 , rely=0.40, anchor=CENTER)
+        self.searchBtn.configure(state="disable", fg_color= "#808080", command=self.RunSearchThread)
 
         self.controllerFrame = customtkinter.CTkFrame(master=root, height=70, width=570)
         self.controllerFrame.grid(row=3,column=0,padx=20,pady=5,sticky="nsew")
@@ -146,16 +156,37 @@ class MusicPlayer:
         self.volumnSlider.place(relx=0.88, rely=0.5, anchor=CENTER)
         self.volumnSlider.set(self.volumn)
 
-        print(self.loop)
         # Init MusicController
-        self.musicController = MusicController(self.trackTextBox, self.playBtn, self.playImage, self.pauseImage, self.track, self.onlineBtn)
+        self.musicController = MusicController(self.trackTextBox, self.playBtn, self.playImage, self.pauseImage, self.track, self.onlineBtn, self.searchBox,
+                                               self.searchBtn)
+
+
+    ###################################### NETWORKING GUI ######################################
+    def RunOnlineThread(self):
+        self.onlineThread = threading.Thread(target=self.GoOnlineButtonClick,daemon=True)
+        self.onlineThread.start()
 
     def GoOnlineButtonClick(self):
         self.searchBox.configure(state="normal")
-        self.addSongBtn.configure(state="disable")
-        self.addListBtn.configure(state="disable")
-        self.rmvSongBtn.configure(state="disable")
+        self.addSongBtn.configure(state="disable",fg_color= "#808080")
+        self.addListBtn.configure(state="disable",fg_color= "#808080")
+        self.rmvSongBtn.configure(state="disable",fg_color= "#808080")
         self.musicController.ConnectToServer()
+
+    def RunSearchThread(self):
+        self.searchThread = threading.Thread(target=self.searchButtonClick, daemon=True)
+        self.searchThread.start()
+
+    def searchButtonClick(self):
+        if self.searchBtn.cget('state') == "normal":
+            self.searchBtn.configure(state="disable",fg_color= "#808080")
+            self.onlineBtn.configure(state="disable",fg_color= "#808080")
+            self.musicController.SearchSong(self.searchBox.get())
+            self.searchBtn.configure(state="normal",fg_color= "#CD4F39")
+            self.onlineBtn.configure(state="normal",fg_color= "#CD4F39")
+
+    #############################################################################################
+
     
     # When play button clicked, run these methods
     def PlayButtonClick(self):
@@ -311,4 +342,4 @@ class MusicPlayer:
 
 root = customtkinter.CTk()
 musicPlayer = MusicPlayer(root)
-asyncio.run(musicPlayer.run())
+musicPlayer.run()

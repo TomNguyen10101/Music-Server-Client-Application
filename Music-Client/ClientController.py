@@ -4,9 +4,10 @@ import pygame
 import socket
 from io import BytesIO
 import asyncio
+import threading
 
 class MusicController:
-    def __init__(self, trackTextBox, playBtn, playImg, pauseImg, track, onlBtn):
+    def __init__(self, trackTextBox, playBtn, playImg, pauseImg, track, onlBtn, searchBox, searchBtn):
         # Volume Variable(s)
         self.mute = False
         self.preVol = 0.0
@@ -29,6 +30,8 @@ class MusicController:
         self.pauseImage = pauseImg
         self.track = track
         self.onlBtn = onlBtn
+        self.searchBox = searchBox
+        self.searchBtn = searchBtn
 
         # Track State Variable(s)
         self.singleLoop = False
@@ -46,6 +49,10 @@ class MusicController:
         self.isConnected = False
         self.HOST = 'localhost'
         self.PORT = 8000
+        self.clientToServerSocket = None
+
+        # Thread Lock
+        self.socketLock = threading.Lock()
 
     # Play the current song
     def Play(self):
@@ -236,24 +243,50 @@ class MusicController:
         buffer = b''
         self.onlBtn.configure(state="disable", fg_color= "#808080")
         try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                
-                s.connect((self.HOST, self.PORT))
-                self.onlBtn.configure(text="Go Offline")
+                self.clientToServerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.clientToServerSocket.connect((self.HOST, self.PORT))
+                self.onlBtn.configure(state="normal",text="Go Offline", fg_color='#CD4F39')
+                self.searchBox.configure(state="normal")
+                self.searchBtn.configure(state="normal", fg_color='#CD4F39')
+                self.isConnected = True
 
-                    # Start listening after successfully connected to the server
-                    # while True:
-                    #     data = s.recv(1024)
-                    #     buffer += data
-                    #     if b'__END_OF_TRANSMISSION__' in data:
-                    #             print("End of transmission received.")
-                    #             break
+                #Start listening after successfully connected to the server
+                while self.isConnected:
+                    data = self.clientToServerSocket.recv(1024)
+                    buffer += data
+                    if b'__END_OF_TRANSMISSION__' in data:
+                        print("End of transmission received.")
+                        self.HandleServerMsg(buffer)
+                        buffer = b''
 
         except socket.error as error:
-            print(f"{error}")
-            self.onlBtn.configure(state="normal", fg_color='#CD4F39')
+                print(f"{error}")
+                self.onlBtn.configure(state="normal", fg_color='#CD4F39')
+
+    def SearchSong(self,query):
+            if self.isConnected:
+                self.clientToServerSocket.sendall(bytes(f'Search:{query}', 'utf-8'))
+            else:
+                print("Not connected to the server")
+
+    def HandleServerMsg(self,buffer):
+        if b'No Result' in buffer:
+            print("No Result")
+        else:
+            try:
+                sound = pygame.mixer.Sound(BytesIO(buffer))
+                sound.play()
+                pygame.time.wait(int(sound.get_length() * 1000))  # Wait for the sound to finish playing
+                
+            except pygame.error as e:
+                print(f"Error playing audio: {e}")
+        self.searchBox.configure(state="normal")
+        self.searchBtn.configure(state="normal", fg_color='#CD4F39')
 
 
+
+    def GoOffline(self):
+        self.isConnected == False
 
 
 

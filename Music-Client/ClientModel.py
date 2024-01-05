@@ -1,20 +1,54 @@
 from mutagen.mp3 import MP3
+import mutagen
 import os
+import eyed3
+from io import BytesIO
+import datetime
 # A class to hold the details of the song
+
+counter = 0
 class Song:
-    def __init__(self, file, artist=None):
+    def __init__(self,file,offline,name=None,artist=None,):
         self.artist = artist
-        self.file = file
         self.prev = None
         self.next = None
-        self.name = os.path.basename(file).replace(".mp3","")
-        
-        # Get the song length
-        song =  MP3(file)
-        min, sec = divmod(song.info.length, 60)
-        hour, min = divmod(min, 60)
-        self.lengthInSec = song.info.length
-        self.songLength = f"{int(min)}:{int(sec)}"
+        self.offline = offline
+        self.file = file
+
+        if self.offline:
+            self.name = os.path.basename(self.file).replace(".mp3","")
+            # Get the song length
+            song =  MP3(self.file)
+            min, sec = divmod(song.info.length, 60)
+            hour, min = divmod(min, 60)
+            self.lengthInSec = song.info.length
+            self.songLength = f"{int(min)}:{int(sec)}"
+        else:
+            # Create a file-like object from the byte stream
+            mp3Stream = mutagen.File(BytesIO(self.file))
+
+            # Try to get the duration from ID3 tags first
+            self.lengthInSec = mp3Stream.info.length
+
+            if self.lengthInSec is None:
+                # If ID3 tags don't have duration, analyze MP3 frames
+                mp3_audio = MP3(self.file)
+                self.lengthInSec = sum(frame.info.length for frame in mp3_audio)
+
+            if self.lengthInSec is not None:
+                #print("Duration:", str(datetime.timedelta(seconds=secs)))
+                secs = self.lengthInSec
+                min = secs / 60
+            else:
+                self.songLength = f"{int(0)}:{int(0)}"
+
+            self.songLength = f"{int(min)}:{int(secs)}"
+
+            global counter
+            self.name = f'Online Song {counter}'
+            counter += 1
+
+
 
 # A class that used to store all the songs
 class Playlist:

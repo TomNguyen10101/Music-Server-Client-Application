@@ -40,6 +40,10 @@ class MusicPlayer:
         self.root.geometry("600x500")
         self.pos = 0
 
+        # Color variables
+        self.enableClr = "#CD4F39"
+        self.disableClr = "#808080"
+
         # Images
         self.loopImage = PhotoImage(file="Icons\\repeat.png")
         self.backImage = PhotoImage(file="Icons\\previous.png")
@@ -157,7 +161,7 @@ class MusicPlayer:
         self.volumnSlider.set(self.volumn)
 
         # Init MusicController
-        self.musicController = MusicController(self.trackTextBox, self.playBtn, self.playImage, self.pauseImage, self.track, self.onlineBtn, self.searchBox,
+        self.musicController = MusicController(self.root, self.trackTextBox, self.playBtn, self.playImage, self.pauseImage, self.track, self.onlineBtn, self.searchBox,
                                                self.searchBtn)
 
 
@@ -167,11 +171,14 @@ class MusicPlayer:
         self.onlineThread.start()
 
     def GoOnlineButtonClick(self):
-        self.searchBox.configure(state="normal")
-        self.addSongBtn.configure(state="disable",fg_color= "#808080")
-        self.addListBtn.configure(state="disable",fg_color= "#808080")
-        self.rmvSongBtn.configure(state="disable",fg_color= "#808080")
-        self.musicController.ConnectToServer()
+        self.addSongBtn.configure(state="disable",fg_color= self.disableClr)
+        self.addListBtn.configure(state="disable",fg_color= self.disableClr)
+        self.rmvSongBtn.configure(state="disable",fg_color= self.disableClr)
+        if not self.musicController.ConnectToServer():
+            self.addSongBtn.configure(state="normal",fg_color=self.enableClr)
+            self.addListBtn.configure(state="normal",fg_color=self.enableClr)
+            self.rmvSongBtn.configure(state="normal",fg_color=self.enableClr)
+            self.onlineBtn.configure(state="normal", fg_color=self.enableClr)
 
     def RunSearchThread(self):
         self.searchThread = threading.Thread(target=self.searchButtonClick, daemon=True)
@@ -190,7 +197,8 @@ class MusicPlayer:
     
     # When play button clicked, run these methods
     def PlayButtonClick(self):
-        self.musicController.Play()
+        #if not self.musicController.isConnected:
+        self.musicController.PlayOffline()
         root.after(100, self.musicController.CheckSongStatus, root)
         root.after(100, self.GetTime, root)
 
@@ -220,7 +228,7 @@ class MusicPlayer:
                 self.PlayButtonClick()
             else:
                 self.musicController.GetIndex(selectedIndex)
-                self.musicController.Play()
+                self.musicController.PlayOffline()
         
         # Clear the selection in the listbox
         self.trackTextBox.selection_clear(0, self.trackTextBox.size()-1)
@@ -277,7 +285,7 @@ class MusicPlayer:
                 os.chdir(folderPath)
                 songtracks = os.listdir()
                 for i, track in enumerate(songtracks):
-                    newSong = Song(track)
+                    newSong = Song(track,True)
                     isDuplicate = self.musicController.AddToPlaylist(newSong)
                     if not isDuplicate:
                         self.trackTextBox.insert(END, f"{i + 1}. {track}")
@@ -292,8 +300,7 @@ class MusicPlayer:
                 filePath = filedialog.askopenfile(title="Choose a MP3 file",mode='r')
                 file = os.path.abspath(filePath.name)
                 track = os.path.basename(filePath.name)
-                newSong = Song(file=file)
-                isDuplicate = self.musicController.AddToPlaylist(newSong)
+                isDuplicate = self.musicController.AddToPlaylist(Song(file=file,offline=True))
                 if not isDuplicate:
                     self.trackTextBox.insert(END, f"{self.musicController.GetPlaylistSize()}. {track}")
             except Exception as e:

@@ -26,8 +26,8 @@ class MusicController:
         self.preVol = pygame.mixer.music.get_volume()
 
         # Some GUI variables for easy adjustment
-        argsDict = kwargs.items()
-        self.root = argsDict['root']
+        argsDict = dict(kwargs.items())
+        self.root = argsDict["root"]
         self.trackTextBox = argsDict['trackTextBox']
         self.playBtn = argsDict['playBtn']
         self.playImage = argsDict['playImg']

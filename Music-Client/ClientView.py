@@ -12,13 +12,50 @@ from tkinter import FLAT
 from tkinter import END
 from tkinter import filedialog
 import pygame
-import asyncio
 customtkinter.set_appearance_mode("dark")
 customtkinter.set_default_color_theme("green")
-from ClientModel import Playlist, Song
+from ClientModel import Song, Settings
 from ClientController import MusicController
 import os
 import threading
+
+class SettingPopup(customtkinter.CTkToplevel):
+    def __init__(self, root, settings, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.geometry("300 x 100")
+        self.title("Settings")
+        self.minsize(300, 100)
+
+        # create 2x3 grid
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure((0, 1), weight=1)
+
+        self.settings = settings
+
+        self.pathLabel= customtkinter.CTkLabel(self, text="Save Files Path")
+        self.pathLabel.grid(row=0, column=0, padx=20, pady=(10, 0)) #sticky="nsew"
+
+        self.pathEntry = customtkinter.CTkEntry(self,placeholder_text=self.settings.downloadPath)
+        self.pathEntry.grid(row=0, column=1, padx=30, pady=(10, 0))
+
+        self.pathBtn = customtkinter.CTkButton(self, text="...",command=self.BtnSetPath,hover_color="#fff", fg_color="#CD4F39", width=30)
+        self.pathBtn.grid(row=0, column=2, padx=30, pady=(10, 0))
+
+        self.pathEntry.bind("<Return>", self.EnterSetPath)
+
+    def EnterSetPath(self,bindEvent):
+        if self.pathEntry.get() != "":
+            self.settings.SetDownloadPath(self.pathEntry.get())
+            self.pathEntry.delete(0)
+            self.pathEntry.insert(0,self.pathEntry.get())
+    def BtnSetPath(self):
+        try:
+            folderPath = filedialog.askdirectory(title="Choose a folder")
+            self.settings.SetDownloadPath(folderPath)
+            self.pathEntry.delete(0)
+            self.pathEntry.insert(0,self.settings.downloadPath)
+        except:
+            print("Not a valid folder")         
 
 class MusicPlayer:
     def __init__(self, root):
@@ -110,12 +147,12 @@ class MusicPlayer:
 
         # Entry Box for searching song
         self.searchBox = customtkinter.CTkEntry(master=self.queuelistFrame, placeholder_text="Type a song",width=110, height=40)
-        self.searchBox.place(relx=0.13 , rely=0.40, anchor=CENTER)
+        self.searchBox.place(relx=0.13 , rely=0.41, anchor=CENTER)
         self.searchBox.configure(state="disable")
 
         # Search Button
         self.searchBtn = customtkinter.CTkButton(master = self.queuelistFrame,text="",width=40, height=40,hover_color="#fff", fg_color="#CD4F39",image=self.searchImage)
-        self.searchBtn.place(relx=0.27 , rely=0.40, anchor=CENTER)
+        self.searchBtn.place(relx=0.27 , rely=0.41, anchor=CENTER)
         self.searchBtn.configure(state="disable", fg_color= "#808080", command=self.RunSearchThread)
 
         self.controllerFrame = customtkinter.CTkFrame(master=root, height=70, width=570)
@@ -161,13 +198,19 @@ class MusicPlayer:
         self.volumnSlider.place(relx=0.88, rely=0.5, anchor=CENTER)
         self.volumnSlider.set(self.volumn)
 
+        # Settings Window related GUIs and variables 
+        self.settings = Settings()
+        self.settingWindow = None
+        self.settingBtn = customtkinter.CTkButton(master=self.queuelistFrame,text="Settings",command=self.OpenSettingWindow,width=155, height=40, fg_color="#CD4F39",hover_color="#fff")
+        self.settingBtn.configure(text_color="black",font=("Helvatica",17))
+        self.settingBtn.place(relx=0.17 , rely=0.57, anchor=CENTER)
+
         # Init MusicController
-        kwargs = {"root":self.root,"trackTextBox":self.trackTextBox,"playButton":self.playBtn,"playImg":self.playImage, "pauseImg":self.pauseImage,"track":self.track,
+        kwargs = {"root":self.root,"trackTextBox":self.trackTextBox,"playBtn":self.playBtn,"playImg":self.playImage, "pauseImg":self.pauseImage,"track":self.track,
                   "onlBtn":self.onlineBtn,"searchBox":self.searchBox,"searchBtn": self.searchBtn}
 
         self.musicController = MusicController(**kwargs)
 
-        self.pop = customtkinter.CTkToplevel(self.root)
     ###################################### NETWORKING GUI ######################################
     def RunOnlineThread(self):
         self.onlineThread = threading.Thread(target=self.GoOnlineButtonClick,daemon=True)
@@ -360,13 +403,21 @@ class MusicPlayer:
             self.timeBar.set(progress)
 
         root.after(50, self.GetTime, root)
-    
+
+    # Open up the setting window when click the settings button
+    def OpenSettingWindow(self):
+        # Create window if its not None or destroyed
+        if self.settingWindow is None or not self.settingWindow.winfo_exists():
+            self.settingWindow = SettingPopup(self.root, self.settings)
+        else:
+            self.settingWindow.focus() # Focus on that window if it exists
+
     # Run the app
     def Run(self):
         self.root.mainloop()
 
-# TODO: Make a Pop Up Window for setting configuration
-# TODO: Implement download button for users to download the music got from server to their local machine
+# TODO: Make a Pop Up Window for setting configuration (Done)
+# TODO: Implement download button for users to download the music got from server to their local machine (Working on this)
 # TODO: Unit testing for the server
 
 

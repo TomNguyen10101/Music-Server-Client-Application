@@ -4,9 +4,8 @@ import os
 import eyed3
 from io import BytesIO
 import datetime
-# A class to hold the details of the song
 
-counter = 0
+# A class to hold the details of the song
 class Song:
     def __init__(self,file,offline,name=None,artist=None,):
         self.artist = artist
@@ -45,8 +44,6 @@ class Song:
             self.songLength = f"{int(min)}:{int(secs)}"
 
             self.name = name
-
-
 
 # A class that used to store all the songs
 class Playlist:
@@ -142,3 +139,12 @@ class Playlist:
         self.currentSong = None
         self.songList.clear()
         self.size = 0
+
+# A class that hold the settings of the app
+class Settings:
+    def __init__(self):
+        self.downloadPath = None
+
+
+    def SetDownloadPath(self, path):
+        self.downloadPath = path

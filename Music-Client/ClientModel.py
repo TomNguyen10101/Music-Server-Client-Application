@@ -44,9 +44,7 @@ class Song:
 
             self.songLength = f"{int(min)}:{int(secs)}"
 
-            global counter
-            self.name = f'Online Song {counter}'
-            counter += 1
+            self.name = name
 
 
 
@@ -138,3 +136,9 @@ class Playlist:
                     currentNode = currentNode.next
             
         self.currentSong = currentNode
+
+    def Clear(self):
+        self.head = None
+        self.currentSong = None
+        self.songList.clear()
+        self.size = 0

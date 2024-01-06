@@ -6,9 +6,10 @@ from io import BytesIO
 import threading
 from tkinter import END
 from tkinter import Listbox
+from credentials import *
 
 class MusicController:
-    def __init__(self, root, trackTextBox, playBtn, playImg, pauseImg, track, onlBtn, searchBox, searchBtn):
+    def __init__(self, **kwargs):
         # Volume Variable(s)
         self.mute = False
         self.preVol = 0.0
@@ -25,15 +26,16 @@ class MusicController:
         self.preVol = pygame.mixer.music.get_volume()
 
         # Some GUI variables for easy adjustment
-        self.root = root
-        self.trackTextBox = trackTextBox
-        self.playBtn = playBtn
-        self.playImage = playImg
-        self.pauseImage = pauseImg
-        self.track = track
-        self.onlBtn = onlBtn
-        self.searchBox = searchBox
-        self.searchBtn = searchBtn
+        argsDict = kwargs.items()
+        self.root = argsDict['root']
+        self.trackTextBox = argsDict['trackTextBox']
+        self.playBtn = argsDict['playBtn']
+        self.playImage = argsDict['playImg']
+        self.pauseImage = argsDict["pauseImg"]
+        self.track = argsDict["track"]
+        self.onlBtn = argsDict["onlBtn"]
+        self.searchBox = argsDict["searchBox"]
+        self.searchBtn = argsDict["searchBtn"]
         self.enableClr = "#CD4F39"
         self.disableClr = "#808080"
 
@@ -51,15 +53,10 @@ class MusicController:
 
         # Connection Flag && Variables
         self.isConnected = False
-        self.HOST = 'localhost'
-        self.PORT = 8000
         self.clientToServerSocket = None
 
-        # Thread Lock
-        self.socketLock = threading.Lock()
-
     # Play the current song
-    def PlayOffline(self):
+    def Play(self):
         if(self.pause == False and self.isRunning == True):
             self.playBtn.configure(image=self.playImage)
             self.Pause()
@@ -212,35 +209,13 @@ class MusicController:
     def AddToPlaylist(self, newSong):
         return self.playlist.Append(newSong)
     
+    # Clear the playlist (memory efficient)
+    def ClearPlaylist(self):
+        self.playlist.Clear()
+    
     #######################################
 
     ####### NETWORKING CODE SECTION #######
-    # HOST = 'localhost'
-    # PORT = 8000
-
-    # buffer = b''
-    # pygame.init()
-    # pygame.mixer.init()
-    # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    #     s.connect((HOST, PORT))
-    #     s.sendall(b'Hello World!')
-
-    #     while True:
-    #         data = s.recv(1024)
-    #         buffer += data
-    #         if b'__END_OF_TRANSMISSION__' in data:
-    #                 print("End of transmission received.")
-    #                 break
-            
-            
-    # # Play the music buffer
-    # try:
-    #     sound = pygame.mixer.Sound(BytesIO(buffer))
-    #     sound.play()
-    #     pygame.time.wait(int(sound.get_length() * 1000))  # Wait for the sound to finish playing
-        
-    # except pygame.error as e:
-    #     print(f"Error playing audio: {e}")
     # finally:
     #     # with open("my_file.mp3", "wb") as binary_file:
     #     #     # Write bytes to file
@@ -252,7 +227,7 @@ class MusicController:
         self.onlBtn.configure(state="disable", fg_color= self.disableClr)
         try:
                 self.clientToServerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.clientToServerSocket.connect((self.HOST, self.PORT))
+                self.clientToServerSocket.connect((HOST_IP, HOST_PORT))
                 self.onlBtn.configure(state="normal",text="Go Offline", fg_color=self.enableClr)
                 self.searchBox.configure(state="normal")
                 self.searchBtn.configure(state="normal", fg_color=self.enableClr)
@@ -283,12 +258,11 @@ class MusicController:
         if b'No Result' in buffer:
             print("No Result")
         else:
+            songInfo = buffer.split(b'__NEXT_HEADER__')
+            songName = songInfo[0].split(b'__NAME__')[1]
+            songStream = songInfo[1].split(b'__FILE__')[1]
             try:
-                # sound = pygame.mixer.Sound(BytesIO(buffer))
-                # sound.play()
-                # pygame.time.wait(int(sound.get_length() * 1000))  # Wait for the sound to finish playing
-
-                newSong = Song(buffer, False)
+                newSong = Song(file=songStream, name=songName.decode('utf-8'),offline=False)
                 try:
                     self.AddToPlaylist(newSong)
                     self.trackTextBox.configure(state="normal")
@@ -297,14 +271,13 @@ class MusicController:
                     print(e)
 
             except Exception as e:
-                print(f"Error playing audio: {e}")
+                print(f"Error playing audio. Error: {e}")
+                
         self.searchBox.configure(state="normal")
         self.searchBtn.configure(state="normal", fg_color=self.enableClr)
       
-
-
     def GoOffline(self):
-        self.isConnected == False
+        self.isConnected = False
 
 
 

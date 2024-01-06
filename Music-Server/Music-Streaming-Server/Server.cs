@@ -187,7 +187,7 @@ namespace StreamingServer
                 }
                 catch (Exception e)
                 {
-
+                    Console.WriteLine("Error: " + e.ToString());
                 }
             }
         }
@@ -205,7 +205,7 @@ namespace StreamingServer
 
             catch(Exception e)
             {
-
+                Console.WriteLine("Error: " + e.ToString());
             }
         }
 
@@ -252,25 +252,10 @@ namespace StreamingServer
             {
                 if (songQuery.Length > 1)
                 {
-                    //if (songQuery[1] == "name")
-                    //{
-                    //    string songToFind = songQuery[2];
-                    //    string songPath = DB.GetSongFromDb(songToFind);
-                    //    if (songPath != null) SendFile(state, songPath);
-                    //    else { 
-                    //        Console.WriteLine("No Result!");
-                    //        Send(state.theSocket, "No Result__END_OF_TRANSMISSION__");
-                    //    }
-                    //}
-                    //else if (songQuery[1] == "artist")
-                    //{
-
-                    //}
-
                     string[] searchParams = songQuery[1].Split(',');
-                    string songPath = DB.GetSongFromDb(searchParams[0]);
-                    if (songPath != null)
-                        SendFile(state, songPath);
+                    string[] songInfo = DB.GetSongFromDb(searchParams[0]);
+                    if (songInfo != null)
+                        SendFile(state, songInfo);
                     else
                     {
                         Console.WriteLine("No Result!");
@@ -283,15 +268,17 @@ namespace StreamingServer
 
         /// <summary>
         /// Send mp3 file to the user based on their search
+        /// Protocol for sending the file: Name:<name>,File:<file>__END_OF_TRANSMISSION__
         /// </summary>
         /// <param name="state"></param>
-        private static void SendFile(SocketState state, string filePath)
+        private static void SendFile(SocketState state, string[] songInfo)
         {
             try
             {
+                Send(state.theSocket, $"__NAME__{songInfo[0]}" + "__NEXT_HEADER__" + "__FILE__");
                 NetworkStream netstream = new NetworkStream(state.theSocket);
                 StreamWriter writer = new StreamWriter(netstream);
-                FileStream fileStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                FileStream fileStream = File.Open(songInfo[1], FileMode.Open, FileAccess.Read, FileShare.Read);
                 fileStream.CopyTo(netstream);
                 netstream.Flush();
                 // Send a message to the client, signal that it is done transfering the data
@@ -306,7 +293,6 @@ namespace StreamingServer
             }
         }
 
-        // TODO: Implement the protocol for receiving different data from the users
 
         static void Main(string[] args)
         {

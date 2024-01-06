@@ -22,6 +22,7 @@ import threading
 
 class MusicPlayer:
     def __init__(self, root):
+
         self.track = StringVar()
         self.track.set("The Music Player")
 
@@ -161,25 +162,37 @@ class MusicPlayer:
         self.volumnSlider.set(self.volumn)
 
         # Init MusicController
-        self.musicController = MusicController(self.root, self.trackTextBox, self.playBtn, self.playImage, self.pauseImage, self.track, self.onlineBtn, self.searchBox,
-                                               self.searchBtn)
+        kwargs = {"root":self.root,"trackTextBox":self.trackTextBox,"playButton":self.playBtn,"playImg":self.playImage, "pauseImg":self.pauseImage,"track":self.track,
+                  "onlBtn":self.onlineBtn,"searchBox":self.searchBox,"searchBtn": self.searchBtn}
 
+        self.musicController = MusicController(**kwargs)
 
+        self.pop = customtkinter.CTkToplevel(self.root)
     ###################################### NETWORKING GUI ######################################
     def RunOnlineThread(self):
         self.onlineThread = threading.Thread(target=self.GoOnlineButtonClick,daemon=True)
         self.onlineThread.start()
 
     def GoOnlineButtonClick(self):
-        self.addSongBtn.configure(state="disable",fg_color= self.disableClr)
-        self.addListBtn.configure(state="disable",fg_color= self.disableClr)
-        self.rmvSongBtn.configure(state="disable",fg_color= self.disableClr)
-        if not self.musicController.ConnectToServer():
-            self.addSongBtn.configure(state="normal",fg_color=self.enableClr)
-            self.addListBtn.configure(state="normal",fg_color=self.enableClr)
-            self.rmvSongBtn.configure(state="normal",fg_color=self.enableClr)
-            self.onlineBtn.configure(state="normal", fg_color=self.enableClr)
+        # If Offline 
+        if not self.musicController.isConnected:
+            self.SetStateButton([self.addSongBtn, self.addListBtn, self.rmvSongBtn], "disable")
 
+            if not self.musicController.ConnectToServer():
+                self.SetStateButton([self.addSongBtn, self.addListBtn, self.rmvSongBtn, self.onlineBtn], "normal")
+            else:
+                self.trackTextBox.delete(0, END) # Clear the tracks box
+
+        # If Online
+        else:
+            self.musicController.GoOffline()
+            self.onlineBtn.configure(text="Go Online")
+            self.track.set("The Music Player")
+            self.searchBtn.configure(state="disable", fg_color = self.disableClr)
+            self.searchBox.configure(state="disable")
+            self.musicController.ClearPlaylist()
+            self.trackTextBox.delete(0, END)    # Clear the tracks box
+                        
     def RunSearchThread(self):
         self.searchThread = threading.Thread(target=self.searchButtonClick, daemon=True)
         self.searchThread.start()
@@ -188,17 +201,22 @@ class MusicPlayer:
         if self.searchBtn.cget('state') == "normal":
             self.searchBtn.configure(state="disable",fg_color= "#808080")
             self.onlineBtn.configure(state="disable",fg_color= "#808080")
-            self.musicController.SearchSong(self.searchBox.get())
+
+            songToFind = self.searchBox.get()
+            if songToFind != "":
+                self.musicController.SearchSong(self.searchBox.get())
+
             self.searchBtn.configure(state="normal",fg_color= "#CD4F39")
             self.onlineBtn.configure(state="normal",fg_color= "#CD4F39")
 
     #############################################################################################
+    def SetStateButton(self, buttons, state):
+        for button in buttons:
+            button.configure(state=state, fg_color = self.disableClr if state == "disable" else self.enableClr)
 
-    
     # When play button clicked, run these methods
     def PlayButtonClick(self):
-        #if not self.musicController.isConnected:
-        self.musicController.PlayOffline()
+        self.musicController.Play()
         root.after(100, self.musicController.CheckSongStatus, root)
         root.after(100, self.GetTime, root)
 
@@ -228,7 +246,7 @@ class MusicPlayer:
                 self.PlayButtonClick()
             else:
                 self.musicController.GetIndex(selectedIndex)
-                self.musicController.PlayOffline()
+                self.musicController.Play()
         
         # Clear the selection in the listbox
         self.trackTextBox.selection_clear(0, self.trackTextBox.size()-1)
@@ -342,11 +360,17 @@ class MusicPlayer:
             self.timeBar.set(progress)
 
         root.after(50, self.GetTime, root)
-
-
-    def run(self):
+    
+    # Run the app
+    def Run(self):
         self.root.mainloop()
 
-root = customtkinter.CTk()
-musicPlayer = MusicPlayer(root)
-musicPlayer.run()
+# TODO: Make a Pop Up Window for setting configuration
+# TODO: Implement download button for users to download the music got from server to their local machine
+# TODO: Unit testing for the server
+
+
+if __name__ == "__main__":
+    root = customtkinter.CTk()
+    musicPlayer = MusicPlayer(root)
+    musicPlayer.Run()

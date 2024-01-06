@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Tracing;
+using System.Reflection.Metadata.Ecma335;
 using Microsoft.Data.Sqlite;
 
 namespace MusicDB
@@ -10,7 +11,7 @@ namespace MusicDB
         /// Get the song path based on the user search
         /// </summary>
         /// <param name="query"></param>
-        public static string GetSongFromDb(string query)
+        public static string[] GetSongFromDb(string query)
         {
             //string currentDirectory = Directory.GetCurrentDirectory();
             //Console.WriteLine($"Current Directory: {currentDirectory}");
@@ -18,15 +19,17 @@ namespace MusicDB
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = @"SELECT Path FROM Songs WHERE Name LIKE @Val1";
+                command.CommandText = @"SELECT Name, Path FROM Songs WHERE Name LIKE @Val1";
                 command.Parameters.AddWithValue("@Val1",$"{query}%");
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        string path = reader.GetString(0);
-                        Console.WriteLine($"Song Path: {path}");
-                        return path;
+                        string name = reader.GetString(0); // First Column
+                        string path = reader.GetString(1); // Second Column
+                        Console.WriteLine($"Song Name: {name},Song Path: {path}");
+                        string[] songInfo = { name, path };
+                        return songInfo;
                     }
                 }
             }

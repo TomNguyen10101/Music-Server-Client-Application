@@ -1,4 +1,4 @@
-# MUSIC PLAYER
+# MUSIC CLIENT APP
 # Author: Quan Nguyen
 # Start Date: 05/14/2023
 
@@ -419,7 +419,6 @@ class MusicPlayer:
 # TODO: Make a Pop Up Window for setting configuration (Done)
 # TODO: Implement download button for users to download the music got from server to their local machine (Working on this)
 # TODO: Unit testing for the server
-
 
 if __name__ == "__main__":
     root = customtkinter.CTk()

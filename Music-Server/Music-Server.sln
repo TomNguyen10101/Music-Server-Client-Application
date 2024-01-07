@@ -5,9 +5,9 @@ VisualStudioVersion = 17.7.34202.233
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Music-Server", "Music-Streaming-Server\Music-Server.csproj", "{6EFD272C-84B5-4E67-BEDC-AD68E2EA2999}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Simple-Client", "Simple-Client\Simple-Client.csproj", "{B55759DC-5C43-4E70-AD34-B71C932E948A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Music-Database", "Music-Database\Music-Database.csproj", "{3144E0D5-4643-49FF-AFFB-3E3C8EA63006}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Music-Database", "Music-Database\Music-Database.csproj", "{3144E0D5-4643-49FF-AFFB-3E3C8EA63006}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server-Tests", "Server-Tests\Server-Tests.csproj", "{B644F5B8-0273-4D48-9B9F-667B5591FCD5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,14 +19,14 @@ Global
 		{6EFD272C-84B5-4E67-BEDC-AD68E2EA2999}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6EFD272C-84B5-4E67-BEDC-AD68E2EA2999}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6EFD272C-84B5-4E67-BEDC-AD68E2EA2999}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B55759DC-5C43-4E70-AD34-B71C932E948A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B55759DC-5C43-4E70-AD34-B71C932E948A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B55759DC-5C43-4E70-AD34-B71C932E948A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B55759DC-5C43-4E70-AD34-B71C932E948A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3144E0D5-4643-49FF-AFFB-3E3C8EA63006}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{3144E0D5-4643-49FF-AFFB-3E3C8EA63006}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3144E0D5-4643-49FF-AFFB-3E3C8EA63006}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3144E0D5-4643-49FF-AFFB-3E3C8EA63006}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B644F5B8-0273-4D48-9B9F-667B5591FCD5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B644F5B8-0273-4D48-9B9F-667B5591FCD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B644F5B8-0273-4D48-9B9F-667B5591FCD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B644F5B8-0273-4D48-9B9F-667B5591FCD5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

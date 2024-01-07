@@ -4,9 +4,9 @@ using System.Net.Sockets;
 using System.Text;
 using MusicDB;
 using SQLitePCL;
-namespace StreamingServer
+namespace MusicServer
 {
-    class Server
+    internal class Server
     {
         // Global Variables
         private static bool running = false;
@@ -293,14 +293,18 @@ namespace StreamingServer
             }
         }
 
-
-        static void Main(string[] args)
+        // For Testing
+        public void start()
         {
             StartServer(HandleNewClient, 8000);
             running = true;
+        }
 
+        static void Main(string[] args)
+        {
+            Server server = new Server();
+            server.start();
             Console.ReadLine();
-            
         }
     }
 }

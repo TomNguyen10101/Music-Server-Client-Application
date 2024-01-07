@@ -3,9 +3,7 @@ import random
 import pygame
 import socket
 from io import BytesIO
-import threading
 from tkinter import END
-from tkinter import Listbox
 from credentials import *
 
 class MusicController:

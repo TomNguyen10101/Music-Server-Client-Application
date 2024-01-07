@@ -1,9 +1,7 @@
 from mutagen.mp3 import MP3
 import mutagen
 import os
-import eyed3
 from io import BytesIO
-import datetime
 
 # A class to hold the details of the song
 class Song:

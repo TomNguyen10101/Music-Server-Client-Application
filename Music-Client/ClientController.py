@@ -1,10 +1,11 @@
-from ClientModel import Playlist, Song
+from ClientModel import Playlist, Song, Settings
 import random
 import pygame
 import socket
 from io import BytesIO
 from tkinter import END
 from credentials import *
+from customtkinter import filedialog
 
 class MusicController:
     def __init__(self, **kwargs):
@@ -34,6 +35,7 @@ class MusicController:
         self.onlBtn = argsDict["onlBtn"]
         self.searchBox = argsDict["searchBox"]
         self.searchBtn = argsDict["searchBtn"]
+        self.downloadBtn = argsDict["downloadBtn"]
         self.enableClr = "#CD4F39"
         self.disableClr = "#808080"
 
@@ -54,7 +56,8 @@ class MusicController:
         self.clientToServerSocket = None
 
     # Play the current song
-    def Play(self):
+    def Play(self) -> bool:
+        if self.GetPlaylistSize() == 0: return False
         if(self.pause == False and self.isRunning == True):
             self.playBtn.configure(image=self.playImage)
             self.Pause()
@@ -72,34 +75,43 @@ class MusicController:
                 self.currIndex = 0
 
         if(not self.isRunning):
-            try:
-                if not self.playlist.currentSong.offline:
-                    fileToPlay = BytesIO(self.playlist.currentSong.file)
-                else:
-                    fileToPlay = self.playlist.currentSong.file
+            if self.playlist.currentSong:
+                try:
+                    if not self.playlist.currentSong.offline:
+                        fileToPlay = BytesIO(self.playlist.currentSong.file)
+                    else:
+                        fileToPlay = self.playlist.currentSong.file
 
-                pygame.mixer.music.load(fileToPlay)
-                pygame.mixer.music.play()
+                    pygame.mixer.music.load(fileToPlay)
+                    pygame.mixer.music.play()
 
-                # Hard To Do: Add a fade effect between songs
+                    # Hard To Do: Add a fade effect between songs
 
-                self.track.set(self.playlist.currentSong.name)
+                    self.track.set(self.playlist.currentSong.name)
 
-                if(self.prevIndex is None):
-                    self.trackTextBox.itemconfig(self.currIndex, {'fg': self.enableClr})
-                else:
-                    self.trackTextBox.itemconfig(self.prevIndex, {'fg': '#fff'})
-                    self.trackTextBox.itemconfig(self.currIndex, {'fg': self.enableClr})
-                
-                self.isRunning = True
-                self.stop = False
+                    if(self.prevIndex is None):
+                        self.trackTextBox.itemconfig(self.currIndex, {'fg': self.enableClr})
+                    else:
+                        self.trackTextBox.itemconfig(self.prevIndex, {'fg': '#fff'})
+                        self.trackTextBox.itemconfig(self.currIndex, {'fg': self.enableClr})
+                    
+                    self.isRunning = True
+                    self.stop = False
 
-            except Exception as e:
-                print(f"Can't Play Audio.Error: {str(e)}")
+                    return True
+
+                except Exception as e:
+                    print(f"Can't Play Audio.Error: {str(e)}")
+
+        return False
 
     # This method is for checking whether the song has ended 
     # --> To move to the next song depends on the option of the user     
     def CheckSongStatus(self, root):
+        if self.playlist.currentSong.isDownloadable:
+            self.downloadBtn.configure(state="normal", fg_color=self.enableClr)
+        else:
+            self.downloadBtn.configure(state="disable", fg_color=self.disableClr)
         for event in pygame.event.get():
             if event.type == self.SONG_END:
                 self.isRunning = False
@@ -214,11 +226,6 @@ class MusicController:
     #######################################
 
     ####### NETWORKING CODE SECTION #######
-    # finally:
-    #     # with open("my_file.mp3", "wb") as binary_file:
-    #     #     # Write bytes to file
-    #     #     binary_file.write(buffer)
-    #     pass
 
     def ConnectToServer(self):
         buffer = b''
@@ -277,7 +284,27 @@ class MusicController:
     def GoOffline(self):
         self.isConnected = False
 
+    def DownloadSong(self) -> bool:
+        print("yes")
+        try:
+            if Settings.downloadPath:
+                fileName = f'{Settings.downloadPath}\\{self.playlist.currentSong.name}.mp3'
+            else:
+                downloadPath = filedialog.askdirectory(title="Choose a folder")
+                Settings.SetDownloadPath(downloadPath)
+                fileName = f'{downloadPath}\\{self.playlist.currentSong.name}.mp3'
 
+            try:
+                with open(fileName, "wb") as downloadFile:
+                    # Write bytes to file
+                    downloadFile.write(self.playlist.currentSong.file)
+
+                self.playlist.currentSong.isDownloadable = False
+            except Exception as e:
+                print(f"Can't download the song. Error: {e}")
+        except Exception as e:
+            print("{e}")
+            
 
 
 

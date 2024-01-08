@@ -20,7 +20,7 @@ import os
 import threading
 
 class SettingPopup(customtkinter.CTkToplevel):
-    def __init__(self, root, settings, *args, **kwargs):
+    def __init__(self, root, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.geometry("300 x 100")
         self.title("Settings")
@@ -30,12 +30,10 @@ class SettingPopup(customtkinter.CTkToplevel):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure((0, 1), weight=1)
 
-        self.settings = settings
-
         self.pathLabel= customtkinter.CTkLabel(self, text="Save Files Path")
         self.pathLabel.grid(row=0, column=0, padx=20, pady=(10, 0)) #sticky="nsew"
 
-        self.pathEntry = customtkinter.CTkEntry(self,placeholder_text=self.settings.downloadPath)
+        self.pathEntry = customtkinter.CTkEntry(self,placeholder_text=Settings.downloadPath)
         self.pathEntry.grid(row=0, column=1, padx=30, pady=(10, 0))
 
         self.pathBtn = customtkinter.CTkButton(self, text="...",command=self.BtnSetPath,hover_color="#fff", fg_color="#CD4F39", width=30)
@@ -45,17 +43,18 @@ class SettingPopup(customtkinter.CTkToplevel):
 
     def EnterSetPath(self,bindEvent):
         if self.pathEntry.get() != "":
-            self.settings.SetDownloadPath(self.pathEntry.get())
+            Settings.SetDownloadPath(self.pathEntry.get())
             self.pathEntry.delete(0)
             self.pathEntry.insert(0,self.pathEntry.get())
     def BtnSetPath(self):
         try:
             folderPath = filedialog.askdirectory(title="Choose a folder")
-            self.settings.SetDownloadPath(folderPath)
+            Settings.SetDownloadPath(folderPath)
+            print(Settings.downloadPath)
             self.pathEntry.delete(0)
-            self.pathEntry.insert(0,self.settings.downloadPath)
-        except:
-            print("Not a valid folder")         
+            self.pathEntry.insert(0,Settings.downloadPath)
+        except Exception as e:
+            print(f"Folder Error: {e}")         
 
 class MusicPlayer:
     def __init__(self, root):
@@ -96,6 +95,8 @@ class MusicPlayer:
         self.addImage = PhotoImage(file="Icons\\add.png")
         self.rmvImage = PhotoImage(file="Icons\\minus.png")
         self.searchImage = PhotoImage(file="Icons\\search.png")
+        self.settingImage = PhotoImage(file="Icons\\settings.png")
+        self.downloadImage = PhotoImage(file="Icons\\download.png")
 
         # Volume Variable
         self.volumn = 100
@@ -103,6 +104,7 @@ class MusicPlayer:
         # THREADS
         self.onlineThread = None
         self.searchThread = None
+        self.downloadThread = None
 
         # NEW GUI
         self.root.grid_rowconfigure(0, weight=1)
@@ -199,15 +201,18 @@ class MusicPlayer:
         self.volumnSlider.set(self.volumn)
 
         # Settings Window related GUIs and variables 
-        self.settings = Settings()
         self.settingWindow = None
-        self.settingBtn = customtkinter.CTkButton(master=self.queuelistFrame,text="Settings",command=self.OpenSettingWindow,width=155, height=40, fg_color="#CD4F39",hover_color="#fff")
-        self.settingBtn.configure(text_color="black",font=("Helvatica",17))
-        self.settingBtn.place(relx=0.17 , rely=0.57, anchor=CENTER)
+        self.settingBtn = customtkinter.CTkButton(master=self.queuelistFrame,text="",command=self.OpenSettingWindow,width=40,height=40,fg_color="#CD4F39",hover_color="#fff", image=self.settingImage)
+        self.settingBtn.place(relx=0.07 , rely=0.57, anchor=CENTER)
+
+        # Download song related GUIs and variables
+        self.downloadBtn = customtkinter.CTkButton(master=self.queuelistFrame,text="",command=self.RunDownloadThread,width=40,height=40,fg_color="#CD4F39",hover_color="#fff", image=self.downloadImage)
+        self.downloadBtn.place(relx=0.17 , rely=0.57, anchor=CENTER)
+        self.downloadBtn.configure(state="disable", fg_color=self.disableClr)
 
         # Init MusicController
         kwargs = {"root":self.root,"trackTextBox":self.trackTextBox,"playBtn":self.playBtn,"playImg":self.playImage, "pauseImg":self.pauseImage,"track":self.track,
-                  "onlBtn":self.onlineBtn,"searchBox":self.searchBox,"searchBtn": self.searchBtn}
+                  "onlBtn":self.onlineBtn,"searchBox":self.searchBox,"searchBtn": self.searchBtn, "downloadBtn":self.downloadBtn}
 
         self.musicController = MusicController(**kwargs)
 
@@ -259,9 +264,9 @@ class MusicPlayer:
 
     # When play button clicked, run these methods
     def PlayButtonClick(self):
-        self.musicController.Play()
-        root.after(100, self.musicController.CheckSongStatus, root)
-        root.after(100, self.GetTime, root)
+        if self.musicController.Play():
+            root.after(100, self.musicController.CheckSongStatus, root)
+            root.after(100, self.GetTime, root)
 
     # When Backward Button clicked, call this method
     def BackwardButtonClick(self):
@@ -408,9 +413,19 @@ class MusicPlayer:
     def OpenSettingWindow(self):
         # Create window if its not None or destroyed
         if self.settingWindow is None or not self.settingWindow.winfo_exists():
-            self.settingWindow = SettingPopup(self.root, self.settings)
+            self.settingWindow = SettingPopup(self.root)
         else:
             self.settingWindow.focus() # Focus on that window if it exists
+
+    def RunDownloadThread(self):
+        
+        if self.downloadBtn.cget("state") == "normal":
+            self.downloadThread = threading.Thread(target=self.DownloadBtnClick, daemon=True)
+            self.downloadThread.start()        
+
+    def DownloadBtnClick(self):
+        self.musicController.DownloadSong()
+
 
     # Run the app
     def Run(self):

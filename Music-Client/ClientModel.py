@@ -11,8 +11,10 @@ class Song:
         self.next = None
         self.offline = offline
         self.file = file
+        self.isDownloadable = None
 
         if self.offline:
+            self.isDownloadable = False
             self.name = os.path.basename(self.file).replace(".mp3","")
             # Get the song length
             song =  MP3(self.file)
@@ -21,6 +23,7 @@ class Song:
             self.lengthInSec = song.info.length
             self.songLength = f"{int(min)}:{int(sec)}"
         else:
+            self.isDownloadable = True
             # Create a file-like object from the byte stream
             mp3Stream = mutagen.File(BytesIO(self.file))
 
@@ -140,9 +143,9 @@ class Playlist:
 
 # A class that hold the settings of the app
 class Settings:
-    def __init__(self):
-        self.downloadPath = None
+    downloadPath = None
 
-
-    def SetDownloadPath(self, path):
-        self.downloadPath = path
+    @classmethod
+    def SetDownloadPath(cls, path):
+        cls.downloadPath = path
+    
